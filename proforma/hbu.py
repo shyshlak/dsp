@@ -1,6 +1,8 @@
 """Highest and best use."""
 from copy import deepcopy
 
+from . import prototypes
+
 
 class HBU:
     """Highest and best use."""
@@ -10,18 +12,18 @@ class HBU:
         self.parcel = parcel
         self.prototypes = deepcopy(prototypes)
         for prototype in self.prototypes:
-            prototype.prototype.fit(parcel)
+            prototype.fit(parcel)
             # Does zoning allow this prototype?
-            is_allowed = screen.loc[parcel.code, prototype.prototype.name]
-            prototype.prototype.rpv_per_sf_screen = prototype.prototype.rpv_per_sf * is_allowed
+            is_allowed = screen.loc[parcel.code, prototype.name]
+            prototype.rpv_per_sf_screen = prototype.rpv_per_sf * is_allowed
 
-        self.hbu = max(self.prototypes, key=lambda x: x.prototype.rpv_per_sf_screen)
+        self.hbu = max(self.prototypes, key=lambda x: x.rpv_per_sf_screen)
 
     @property
     def rmv_rpv_ratio(self):
         """Real market value to residual property value ratio."""
         rmv = self.parcel.rmv_per_sf
-        rpv = self.hbu.prototype.rpv_per_sf_screen
+        rpv = self.hbu.rpv_per_sf_screen
 
         if rpv == 0:
             return 'NA'
@@ -48,18 +50,17 @@ class HBU:
     @property
     def n_units(self):
         """Determine the number of yielded units."""
-        if 'residential' in self.hbu.type:
+        if not isinstance(
+            self.hbu,
+            (prototypes.ResidentialOwnershipPrototype, prototypes.ResidentialRentalPrototype)
+        ):
+            # Units only apply to residential prototypes
             return 0
-        max_units = self.hbu.prototype.density / 43560 * self.parcel.sf
+        max_units = self.hbu.density / 43560 * self.parcel.sf
         # Limit
-        return max_units * self.redevelopment_rate * self.hbu.prototype.limiting_factor
+        return max_units * self.redevelopment_rate * self.hbu.limiting_factor
 
     @property
     def n_sf(self):
         """Determine the number of yielded square feet."""
-        return (
-            self.hbu.prototype.far
-            * self.parcel.sf
-            * self.redevelopment_rate
-            * self.hbu.prototype.limiting_factor
-        )
+        return self.hbu.far * self.parcel.sf * self.redevelopment_rate * self.hbu.limiting_factor
