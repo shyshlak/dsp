@@ -7,17 +7,21 @@ from . import prototypes
 class HBU:
     """Highest and best use."""
 
-    def __init__(self, parcel, prototypes, screen):
+    def __init__(self, parcel, prototypes, screen, prev_hbu=None):
         """Initialize."""
         self.parcel = parcel
         self.prototypes = deepcopy(prototypes)
         for prototype in self.prototypes:
             prototype.fit(parcel)
             # Does zoning allow this prototype?
-            is_allowed = screen.loc[parcel.code, prototype.name]
-            prototype.rpv_per_sf_screen = prototype.rpv_per_sf * is_allowed
+            prototype.is_allowed = bool(screen.loc[parcel.code, prototype.name])
+            prototype.rpv_per_sf_screen = prototype.rpv_per_sf * prototype.is_allowed
 
         self.hbu = max(self.prototypes, key=lambda x: x.rpv_per_sf_screen)
+
+        self.limiting_factor = self.hbu.limiting_factor
+        if prev_hbu is not None:
+            self.limiting_factor *= prev_hbu.limiting_factor
 
     @property
     def rmv_rpv_ratio(self):
@@ -58,9 +62,9 @@ class HBU:
             return 0
         max_units = self.hbu.density / 43560 * self.parcel.sf
         # Limit
-        return max_units * self.redevelopment_rate * self.hbu.limiting_factor
+        return max_units * self.redevelopment_rate * self.limiting_factor
 
     @property
     def n_sf(self):
         """Determine the number of yielded square feet."""
-        return self.hbu.far * self.parcel.sf * self.redevelopment_rate * self.hbu.limiting_factor
+        return self.hbu.far * self.parcel.sf * self.redevelopment_rate * self.limiting_factor
