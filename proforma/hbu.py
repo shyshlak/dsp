@@ -5,20 +5,23 @@ from copy import deepcopy
 class HBU:
     """Highest and best use."""
 
-    def __init__(self, parcel, prototypes):
+    def __init__(self, parcel, prototypes, screen):
         """Initialize."""
         self.parcel = parcel
         self.prototypes = deepcopy(prototypes)
         for prototype in self.prototypes:
             prototype.prototype.fit(parcel)
+            # Does zoning allow this prototype?
+            is_allowed = screen.loc[parcel.code, prototype.prototype.name]
+            prototype.prototype.rpv_per_sf_screen = prototype.prototype.rpv_per_sf * is_allowed
 
-        self.hbu = max(self.prototypes, key=lambda x: x.prototype.rpv_per_sf)
+        self.hbu = max(self.prototypes, key=lambda x: x.prototype.rpv_per_sf_screen)
 
     @property
     def rmv_rpv_ratio(self):
         """Real market value to residual property value ratio."""
         rmv = self.parcel.rmv_per_sf
-        rpv = self.hbu.prototype.rpv_per_sf
+        rpv = self.hbu.prototype.rpv_per_sf_screen
 
         if rpv == 0:
             return 'NA'
