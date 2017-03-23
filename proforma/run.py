@@ -9,6 +9,33 @@ from.hbu import HBU
 class ModelRun:
     """Model run."""
 
+    def __init__(self, parcels, prototypes, screen, n_iterations=5):
+        """init."""
+        self.parcels = deepcopy(parcels)
+        self.prototypes = deepcopy(prototypes)
+        self.screen = screen
+
+        self.iterations = []
+        parcels_new = self.parcels
+        for _ in range(n_iterations):
+            iteration = ModelIteration(parcels_new, self.prototypes, self.screen)
+            self.iterations.append(iteration)
+            parcels_new = iteration.parcels_new
+
+    @property
+    def n_sf(self):
+        """Total number of square feet yielded across all iterations."""
+        return sum(iteration.n_sf for iteration in self.iterations)
+
+    @property
+    def n_units(self):
+        """Total number of units yielded across all iterations."""
+        return sum(iteration.n_units for iteration in self.iterations)
+
+
+class ModelIteration:
+    """Model iteration."""
+
     def __init__(self, parcels, prototypes, screen):
         """init."""
         self.parcels = deepcopy(parcels)
