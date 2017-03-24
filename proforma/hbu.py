@@ -45,8 +45,6 @@ class HBU:
         for upper_bound, rate in self.conversion_rates:
             if ratio < upper_bound:
                 return rate
-        # If above the final, just return the last rate
-        return rate
 
     @property
     def n_units(self):

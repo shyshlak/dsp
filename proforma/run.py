@@ -8,20 +8,34 @@ import pandas as pd
 from.hbu import HBU
 
 
+def compound_rate(x, n):
+    """Compound X for n periods."""
+    return ((1 + x) ** n) - 1
+
+
 class ModelRun:
     """Model run."""
 
-    def __init__(self, parcels, prototypes, screen, conversion_rates, n_iterations=5):
+    def __init__(
+        self, parcels, prototypes, screen, base_conversion_rates, iteration_length=5, n_iterations=5
+    ):
         """init."""
         self.parcels = deepcopy(parcels)
         self.prototypes = deepcopy(prototypes)
         self.screen = screen
-        self.conversion_rates = conversion_rates
+        self.base_conversion_rates = base_conversion_rates
+        self.iteration_length = iteration_length
+
+        # Compound conversion rates
+        self.conversion_rates = tuple(
+            (upper_bound, compound_rate(rate, iteration_length))
+            for upper_bound, rate in base_conversion_rates
+        )
 
         self.iterations = []
         parcels_new = self.parcels
         for _ in range(n_iterations):
-            iteration = ModelIteration(parcels_new, self.prototypes, screen, conversion_rates)
+            iteration = ModelIteration(parcels_new, self.prototypes, screen, self.conversion_rates)
             self.iterations.append(iteration)
             parcels_new = iteration.parcels_new
 
