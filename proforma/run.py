@@ -3,6 +3,8 @@
 from copy import deepcopy
 from functools import lru_cache
 
+import pandas as pd
+
 from.hbu import HBU
 
 
@@ -31,6 +33,26 @@ class ModelRun:
     def n_units(self):
         """Total number of units yielded across all iterations."""
         return sum(iteration.n_units for iteration in self.iterations)
+
+    def _df_rows(self):
+        """Generator yielded rows used by to_df()."""
+        for iter_num, iteration in enumerate(self.iterations):
+            for parcel_run in iteration.parcel_runs:
+                for hbu_num in range(1, 4):
+                    hbu_name = 'hbu_{0}'.format(hbu_num)
+                    hbu = getattr(parcel_run, hbu_name)
+                    row = {
+                        'reference': hbu.parcel.reference,
+                        'iteration': iter_num,
+                        'hbu': hbu_num,
+                        'n_sf': hbu.n_sf,
+                        'n_units': hbu.n_units
+                    }
+                    yield row
+
+    def to_df(self):
+        """Reformat the ModelRun data into a DataFrame."""
+        return pd.DataFrame(self._df_rows()).set_index(['reference', 'iteration', 'hbu'])
 
 
 class ModelIteration:
