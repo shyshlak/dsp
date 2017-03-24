@@ -7,7 +7,7 @@ from . import prototypes
 class HBU:
     """Highest and best use."""
 
-    def __init__(self, parcel, prototypes, screen, prev_hbu=None):
+    def __init__(self, parcel, prototypes, screen, conversion_rates, prev_hbu=None):
         """Initialize."""
         self.parcel = parcel
         self.prototypes = deepcopy(prototypes)
@@ -22,6 +22,8 @@ class HBU:
         self.limiting_factor = self.hbu.limiting_factor
         if prev_hbu is not None:
             self.limiting_factor *= prev_hbu.limiting_factor
+
+        self.conversion_rates = conversion_rates
 
     @property
     def rmv_rpv_ratio(self):
@@ -39,17 +41,12 @@ class HBU:
         ratio = self.rmv_rpv_ratio
         if ratio == 'NA':
             return 0
-        elif ratio < 0.75:
-            return 0.0485
-        elif 0.75 <= ratio < 1.25:
-            return 0.0261
-        elif 1.25 <= ratio < 2:
-            return 0.0094
-        elif 2 <= ratio < 4:
-            return 0.0025
-        else:
-            # >= 4
-            return 0.0031
+
+        for upper_bound, rate in self.conversion_rates:
+            if ratio < upper_bound:
+                return rate
+        # If above the final, just return the last rate
+        return rate
 
     @property
     def n_units(self):

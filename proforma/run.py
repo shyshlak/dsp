@@ -11,16 +11,17 @@ from.hbu import HBU
 class ModelRun:
     """Model run."""
 
-    def __init__(self, parcels, prototypes, screen, n_iterations=5):
+    def __init__(self, parcels, prototypes, screen, conversion_rates, n_iterations=5):
         """init."""
         self.parcels = deepcopy(parcels)
         self.prototypes = deepcopy(prototypes)
         self.screen = screen
+        self.conversion_rates = conversion_rates
 
         self.iterations = []
         parcels_new = self.parcels
         for _ in range(n_iterations):
-            iteration = ModelIteration(parcels_new, self.prototypes, self.screen)
+            iteration = ModelIteration(parcels_new, self.prototypes, screen, conversion_rates)
             self.iterations.append(iteration)
             parcels_new = iteration.parcels_new
 
@@ -58,13 +59,16 @@ class ModelRun:
 class ModelIteration:
     """Model iteration."""
 
-    def __init__(self, parcels, prototypes, screen):
+    def __init__(self, parcels, prototypes, screen, conversion_rates):
         """init."""
         self.parcels = deepcopy(parcels)
         self.prototypes = deepcopy(prototypes)
         self.screen = screen
+        self.conversion_rates = conversion_rates
 
-        self.parcel_runs = [ParcelRun(parcel, prototypes, screen) for parcel in self.parcels]
+        self.parcel_runs = [
+            ParcelRun(parcel, prototypes, screen, conversion_rates) for parcel in self.parcels
+        ]
 
         self.parcels_new = []
         for pr in self.parcel_runs:
@@ -86,24 +90,25 @@ class ModelIteration:
 class ParcelRun:
     """Parcel run."""
 
-    def __init__(self, parcel, prototypes, screen):
+    def __init__(self, parcel, prototypes, screen, conversion_rates):
         """init."""
         self.parcel = parcel
         self.prototypes = deepcopy(prototypes)
         self.screen = screen
+        self.conversion_rates = conversion_rates
 
     @property
     @lru_cache()
     def hbu_1(self):
         """Highest and best use #1."""
-        return HBU(self.parcel, self.prototypes, self.screen)
+        return HBU(self.parcel, self.prototypes, self.screen, self.conversion_rates)
 
     @property
     @lru_cache()
     def hbu_2(self):
         """Highest and best use #2."""
         prototypes = [p for p in self.prototypes if not isinstance(p, type(self.hbu_1.hbu))]
-        return HBU(self.parcel, prototypes, self.screen, prev_hbu=self.hbu_1)
+        return HBU(self.parcel, prototypes, self.screen, self.conversion_rates, prev_hbu=self.hbu_1)
 
     @property
     @lru_cache()
@@ -115,7 +120,7 @@ class ParcelRun:
             if not isinstance(p, (type(self.hbu_1.hbu), type(self.hbu_2.hbu)))
         ]
 
-        return HBU(self.parcel, prototypes, self.screen, prev_hbu=self.hbu_2)
+        return HBU(self.parcel, prototypes, self.screen, self.conversion_rates, prev_hbu=self.hbu_2)
 
     @property
     def n_sf(self):
