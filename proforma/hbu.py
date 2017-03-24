@@ -31,7 +31,7 @@ class HBU:
         rmv = self.parcel.rmv_per_sf
         rpv = self.hbu.rpv_per_sf_screen
 
-        if rpv == 0:
+        if rpv <= 0:
             return 'NA'
         return rmv / rpv
 
