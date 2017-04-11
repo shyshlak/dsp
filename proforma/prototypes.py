@@ -7,7 +7,64 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class Prototype:
+class _SharedPrototype:
+    """Shared base class."""
+
+    _INCOME_ATTRIBUTE = None
+    _PARKING_ATTRIBUTE = None
+    LIMITING_FACTOR = None
+
+    def __init__(self, *args, **kwargs):
+        """init."""
+        parcel = kwargs.pop('parcel', None)
+        conversion_rates = kwargs.pop('conversion_rates', None)
+        super().__init__(*args, **kwargs)
+
+        self._is_fit = False
+        if all(x is not None for x in (parcel, conversion_rates)):
+            self.fit(parcel, conversion_rates)
+
+    def __str__(self):
+        return '{0}: {1}'.format(self.__class__.__name__, self.name)
+
+    @property
+    def rmv_rpv_ratio(self):
+        """Real market value to residual property value ratio."""
+        rmv = self.parcel.rmv_per_sf
+        rpv = self.rpv_per_sf
+
+        if rpv <= 0:
+            return None
+        return rmv / rpv
+
+    @property
+    def redevelopment_rate(self):
+        """Redevelopment rate."""
+        ratio = self.rmv_rpv_ratio
+        if ratio is None:
+            return 0
+
+        for upper_bound, rate in self.conversion_rates:
+            if ratio < upper_bound:
+                return rate
+
+    @property
+    def n_sf(self):
+        """Determine the number of yielded square feet."""
+        return self.far * self.parcel.sf * self.redevelopment_rate * self.LIMITING_FACTOR
+
+    @property
+    def n_units(self):
+        """Determine the number of yielded units."""
+        if not isinstance(self, (ResidentialOwnershipPrototype, ResidentialRentalPrototype)):
+            # Units only apply to residential prototypes
+            return 0
+        max_units = self.density / 43560 * self.parcel.sf
+        # Limit
+        return max_units * self.redevelopment_rate * self.LIMITING_FACTOR
+
+
+class Prototype(_SharedPrototype):
     """Prototype base class."""
 
     def __init__(
@@ -31,7 +88,8 @@ class Prototype:
         base_capitalization_rate,
         capitalization_adjustment_factor,
         threshold_return_on_cost,
-        parcel=None
+        *args,
+        **kwargs
     ):
         """docs."""
         self.name = name
@@ -54,12 +112,7 @@ class Prototype:
         self.capitalization_adjustment_factor = capitalization_adjustment_factor,
         self.threshold_return_on_cost = threshold_return_on_cost
 
-        self._is_fit = False
-        if parcel is not None:
-            self.fit(parcel)
-
-    def __str__(self):
-        return '{0}: {1}'.format(self.__class__.__name__, self.name)
+        super().__init__(*args, **kwargs)
 
     # Pro forma
     def __getattr__(self, name):
@@ -69,21 +122,12 @@ class Prototype:
         )
         if name in fit_attributes and not self._is_fit:
             raise ValueError('{0} cannot be accessed until the Prototype is fit.'.format(name))
-        raise AttributeError(
-            '{0} object has no attribute {1}'.format(self.__class__.__name__, name)
-        )
+        return super().__getattr__(name)
 
-    @property
-    def _INCOME_ATTRIBUTE(self):
-        return NotImplemented
-
-    @property
-    def _PARKING_ATTRIBUTE(self):
-        return NotImplemented
-
-    def fit(self, parcel):
-        """Fit a parcel to the pro forma."""
+    def fit(self, parcel, conversion_rates):
+        """Fit a prototype."""
         self.parcel = parcel
+        self.conversion_rates = conversion_rates
         self.base_income_per_sf_per_year = getattr(parcel, self._INCOME_ATTRIBUTE)
         self.parking_charges_per_space_per_month = getattr(parcel, self._PARKING_ATTRIBUTE)
         self._is_fit = True
@@ -215,18 +259,19 @@ class OfficePrototype(Prototype):
 
     _INCOME_ATTRIBUTE = 'off_rent'
     _PARKING_ATTRIBUTE = 'park_off'
-    limiting_factor = 0.9
+    LIMITING_FACTOR = 0.9
 
 
 class RetailPrototype(Prototype):
     """Retail prototype."""
 
     _INCOME_ATTRIBUTE = 'ret_rent'
-    limiting_factor = 0.5
+    LIMITING_FACTOR = 0.5
 
-    def fit(self, parcel):
-        """Fit a parcel to the pro forma."""
+    def fit(self, parcel, conversion_rates):
+        """Fit a prototype."""
         self.parcel = parcel
+        self.conversion_rates = conversion_rates
         self.base_income_per_sf_per_year = getattr(parcel, self._INCOME_ATTRIBUTE)
         self.parking_charges_per_space_per_month = 0
         self._is_fit = True
@@ -236,11 +281,12 @@ class WDPrototype(Prototype):
     """Warehouse and distribution (W&D) industrial prototype."""
 
     _INCOME_ATTRIBUTE = 'wd_rent'
-    limiting_factor = 1
+    LIMITING_FACTOR = 1
 
-    def fit(self, parcel):
-        """Fit a parcel to the pro forma."""
+    def fit(self, parcel, conversion_rates):
+        """Fit a prototype."""
         self.parcel = parcel
+        self.conversion_rates = conversion_rates
         self.base_income_per_sf_per_year = getattr(parcel, self._INCOME_ATTRIBUTE)
         self.parking_charges_per_space_per_month = 0
         self._is_fit = True
@@ -250,22 +296,23 @@ class FlexPrototype(Prototype):
     """Flex industrial prototype."""
 
     _INCOME_ATTRIBUTE = 'flex_rent'
-    limiting_factor = 1
+    LIMITING_FACTOR = 1
 
-    def fit(self, parcel):
-        """Fit a parcel to the pro forma."""
+    def fit(self, parcel, conversion_rates):
+        """Fit a prototype."""
         self.parcel = parcel
+        self.conversion_rates = conversion_rates
         self.base_income_per_sf_per_year = getattr(parcel, self._INCOME_ATTRIBUTE)
         self.parking_charges_per_space_per_month = 0
         self._is_fit = True
 
 
-class ResidentialRentalPrototype:
+class ResidentialRentalPrototype(_SharedPrototype):
     """Residential rental prototype."""
 
     _INCOME_ATTRIBUTE = 'res_rents'
     _PARKING_ATTRIBUTE = 'park_rent'
-    limiting_factor = 0.6
+    LIMITING_FACTOR = 0.6
 
     def __init__(
         self,
@@ -287,7 +334,8 @@ class ResidentialRentalPrototype:
         base_capitalization_rate,
         capitalization_adjustment_factor,
         threshold_return_on_cost,
-        parcel=None
+        *args,
+        **kwargs
     ):
         """docs."""
         self.name = name
@@ -309,9 +357,7 @@ class ResidentialRentalPrototype:
         self.capitalization_adjustment_factor = capitalization_adjustment_factor
         self.threshold_return_on_cost = threshold_return_on_cost
 
-        self._is_fit = False
-        if parcel is not None:
-            self.fit(parcel)
+        super().__init__(*args, **kwargs)
 
     # Pro forma
     def __getattr__(self, name):
@@ -325,15 +371,10 @@ class ResidentialRentalPrototype:
             '{0} object has no attribute {1}'.format(self.__class__.__name__, name)
         )
 
-    def __str__(self):
-        return '{0}: {1}'.format(self.__class__.__name__, self.name)
-
-    def fit(self, parcel):
-        """Fit a parcel to the pro forma.
-
-        Adds the parcel and the attribute self.base_income_per_sf_per_year.
-        """
+    def fit(self, parcel, conversion_rates):
+        """Fit a prototype."""
         self.parcel = parcel
+        self.conversion_rates = conversion_rates
         self.base_income_per_sf_per_month = getattr(parcel, self._INCOME_ATTRIBUTE)
         self.parking_charges_per_space_per_month = getattr(parcel, self._PARKING_ATTRIBUTE)
         self._is_fit = True
@@ -464,12 +505,12 @@ class ResidentialRentalPrototype:
         return self.residual_property_value / self.site_size
 
 
-class ResidentialOwnershipPrototype:
+class ResidentialOwnershipPrototype(_SharedPrototype):
     """Residential ownership prototype."""
 
     _INCOME_ATTRIBUTE = 'res_price'
     _PARKING_ATTRIBUTE = 'park_own'
-    limiting_factor = 0.8
+    LIMITING_FACTOR = 0.8
 
     def __init__(
         self,
@@ -487,7 +528,8 @@ class ResidentialOwnershipPrototype:
         income_adjustment_factor,
         sales_commission,
         threshold_return,
-        parcel=None
+        *args,
+        **kwargs
     ):
         """docs."""
         self.name = name
@@ -505,12 +547,7 @@ class ResidentialOwnershipPrototype:
         self.sales_commission = sales_commission
         self.threshold_return = threshold_return
 
-        self._is_fit = False
-        if parcel is not None:
-            self.fit(parcel)
-
-    def __str__(self):
-        return '{0}: {1}'.format(self.__class__.__name__, self.name)
+        super().__init__(*args, **kwargs)
 
     # Pro forma
     def __getattr__(self, name):
@@ -524,12 +561,10 @@ class ResidentialOwnershipPrototype:
             '{0} object has no attribute {1}'.format(self.__class__.__name__, name)
         )
 
-    def fit(self, parcel):
-        """Fit a parcel to the pro forma.
-
-        Adds the parcel and the attribute self.base_income_per_sf_per_year.
-        """
+    def fit(self, parcel, conversion_rates):
+        """Fit a prototype."""
         self.parcel = parcel
+        self.conversion_rates = conversion_rates
         self.base_sale_price_per_sf = getattr(parcel, self._INCOME_ATTRIBUTE)
         self.parking_charges_per_space = getattr(parcel, self._PARKING_ATTRIBUTE)
         self._is_fit = True
