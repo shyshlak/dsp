@@ -1,5 +1,6 @@
 """Run classes."""
 from copy import deepcopy
+from multiprocessing import Pool
 
 import pandas as pd
 
@@ -13,18 +14,35 @@ class ModelRun:
     """Model run."""
 
     def __init__(
-        self, parcels, prototypes, base_conversion_rates, screen, n_iterations=5, iteration_length=5
+        self,
+        parcels,
+        prototypes,
+        base_conversion_rates,
+        screen,
+        n_iterations,
+        iteration_length,
+        parallel=True
     ):
         """init."""
-        conversion_rates = tuple(
+        self.conversion_rates = tuple(
             (upper_bound, compound_rate(rate, iteration_length))
             for upper_bound, rate in base_conversion_rates
         )
 
-        self.runs = [
-            ParcelRun(parcel, prototypes, conversion_rates, screen, n_iterations)
-            for parcel in parcels
-        ]
+        if parallel:
+            with Pool() as p:
+                self.runs = p.map(
+                    ParcelRun.init_parallel,
+                    [
+                        (parcel, prototypes, self.conversion_rates, screen, n_iterations)
+                        for parcel in parcels
+                    ]
+                )
+        else:
+            self.runs = [
+                ParcelRun(parcel, prototypes, self.conversion_rates, screen, n_iterations)
+                for parcel in parcels
+            ]
 
     @property
     def n_sf(self):
@@ -41,18 +59,24 @@ class ModelRun:
         for run in self.runs:
             for iter_num, iteration in enumerate(run.iterations, start=1):
                 for hbu_num, hbu in enumerate(iteration.hbus, start=1):
-                    row = {
-                        'reference': hbu.parcel.reference,
+                    yield {
+                        'reference': run.reference,
                         'iteration': iter_num,
                         'hbu': hbu_num,
+                        'prototype': hbu.name,
+                        'prototype_class': hbu.__class__.__name__,
                         'n_sf': hbu.n_sf,
                         'n_units': hbu.n_units,
                     }
-                    yield row
 
     def to_df(self):
         """Reformat the ModelRun data into a DataFrame."""
-        return pd.DataFrame(self._df_rows()).set_index(['reference', 'iteration', 'hbu'])
+        return (
+            pd
+            .DataFrame(self._df_rows())
+            .set_index(['reference', 'iteration', 'hbu'])
+            .sort_index()
+        )
 
 
 class ParcelRun:
@@ -62,20 +86,26 @@ class ParcelRun:
         """init."""
         # Keep only prototypes that pass the entitlement screen
         self._parcel = parcel
+        self.reference = parcel.reference
         allowed_prototypes = screen.loc[parcel.code].loc[lambda s: s.eq(1)].index.values
         self.prototypes = [p for p in prototypes if p.name in allowed_prototypes]
 
         self.iterations = list(self._iterations(n_iterations, conversion_rates))
 
+    @classmethod
+    def init_parallel(cls, args):
+        """Initialize when running in parallel."""
+        return cls(*args)
+
     def _iterations(self, n_iterations, conversion_rates):
         """Run the model for N iterations."""
-        self.parcel = self._parcel
+        parcel = self._parcel
         for _ in range(n_iterations):
-            iteration = ParcelIteration(self.parcel, self.prototypes, conversion_rates)
-            # Set up for next iteration
-            self.parcel = deepcopy(self.parcel)
-            self.parcel.sf -= iteration.n_sf
+            iteration = ParcelIteration(parcel, self.prototypes, conversion_rates)
             yield iteration
+            # Set up for next iteration
+            parcel = deepcopy(parcel)
+            parcel.sf -= iteration.n_sf
 
     @property
     def n_sf(self):
@@ -95,8 +125,8 @@ class ParcelIteration:
         """init."""
         self.parcel = parcel
         # Only keep prototypes
-        self.prototypes = prototypes
-        for p in prototypes:
+        self.prototypes = deepcopy(prototypes)
+        for p in self.prototypes:
             p.fit(parcel, conversion_rates)
         self.hbus = list(self._hbus())
 
@@ -107,8 +137,8 @@ class ParcelIteration:
         for _ in range(3):
             # import pdb; pdb.set_trace()
             if not prototypes:
-                # If the list is empty, StopIteration
-                raise StopIteration
+                # If the list is empty, break
+                break
             hbu = max(prototypes, key=lambda x: x.rpv_per_sf)
             yield hbu
             # Set up next iteration
