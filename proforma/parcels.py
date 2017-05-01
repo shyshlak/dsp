@@ -10,7 +10,7 @@ class Parcel:
         code,
         rmv,
         sf,
-        res_rents,
+        res_rent,
         res_price,
         off_mkt,
         off_rent,
@@ -29,7 +29,7 @@ class Parcel:
         self.code = code
         self.rmv = rmv
         self.sf = sf
-        self.res_rents = res_rents
+        self.res_rent = res_rent
         self.res_price = res_price
         self.off_mkt = off_mkt
         self.off_rent = off_rent

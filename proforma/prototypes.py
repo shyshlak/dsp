@@ -310,7 +310,7 @@ class FlexPrototype(Prototype):
 class ResidentialRentalPrototype(_SharedPrototype):
     """Residential rental prototype."""
 
-    _INCOME_ATTRIBUTE = 'res_rents'
+    _INCOME_ATTRIBUTE = 'res_rent'
     _PARKING_ATTRIBUTE = 'park_rent'
     LIMITING_FACTOR = 0.6
 
