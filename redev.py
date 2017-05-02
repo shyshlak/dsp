@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """CLI to real estate redevelopment forecasting model."""
 
 import argparse
