@@ -42,7 +42,7 @@ def parser_factory():
 def build_parcels(data_dir):
     """Convert parcels from DataFrame to list of Parcel objects."""
     filename = path.join(data_dir, 'parcels.csv')
-    df = pav.ParcelReader().read(filename).iloc[:100000]
+    df = pav.ParcelReader().read(filename)
     return [Parcel(**row.to_dict()) for _, row in df.iterrows()]
 
 
@@ -76,6 +76,7 @@ def build_screen(data_dir, parcels, prototypes):
 
 
 def main():
+    """Run CLI."""
     parser = parser_factory()
     args = parser.parse_args()
     data_dir = path.abspath(args.data_dir)
@@ -104,9 +105,42 @@ def main():
     )
     print('Compiling data...')
     df = run.to_df()
+
     # To CSV
     print('Saving data...')
     df.to_csv(args.output_file)
+
+    # Summary stats
+    print('\nCalculating summary statistics...', end='\n\n')
+    print('Number of parcels\t{0}'.format(len(parcels)))
+    print('Total acres yielded\t{0}'.format(df.n_sf.sum() / 43560))
+    print('Total units yielded\t{0}'.format(df.n_units.sum()), end='\n\n')
+    print(
+        (
+            df
+            .groupby('prototype')
+            .n_sf
+            .sum()
+            .div(43560)
+            .sort_values(ascending=False)
+            .rename_axis('Acres by prototype:')
+            .to_string()
+        ),
+        end='\n\n'
+    )
+    print(
+        (
+            df
+            .groupby('prototype')
+            .n_units
+            .sum()
+            .sort_values(ascending=False)
+            .rename_axis('Units by prototype:')
+            .to_string()
+        ),
+        end='\n\n'
+    )
+
     print('Done!')
 
 
