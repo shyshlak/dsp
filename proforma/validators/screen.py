@@ -14,14 +14,14 @@ class ScreenReader(utils.Reader):
     def __init__(self, parcels, prototypes):
         """Initialize entitlement screen reader.
 
-        Requires parcels and prototypes (both DataFrames).
+        Requires parcels and prototypes, list of Parcel and Prototype objects, respectively.
         """
         self.parcels = parcels
         self.prototypes = prototypes
 
     def _codes_in_index(self, df):
         index = set(df.index)
-        codes = set(self.parcels.code)
+        codes = set(parcel.code for parcel in self.parcels)
 
         # Codes should be a subset of index.
         return codes <= index
@@ -29,9 +29,8 @@ class ScreenReader(utils.Reader):
     def get_dtypes(self):
         """Columns should match the prototype names and should all be bool."""
         return {
-            row['name']: bool
-            for prototypes in self.prototypes
-            for _, row in prototypes.iterrows()
+            prototype.name: bool
+            for prototype in self.prototypes
         }
 
     def get_checks(self):
