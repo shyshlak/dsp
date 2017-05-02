@@ -15,7 +15,19 @@ from proforma.validators import parcels as pav, prototypes as pov, screen as sv
 def parser_factory():
     """Parser factory."""
     parser = argparse.ArgumentParser(
-        description='Command-line interface to the Real Estate Redevelopment Forecasting Model'
+        description=(
+            'Command-line interface to the Real Estate Redevelopment Forecasting Model\n\n'
+            'The data directory must contain these eight (8) files:\n'
+            '\t* parcels.csv\n'
+            '\t* entitlement_screen.xlsx\n'
+            '\t* prototypes/flex.xlsx\n'
+            '\t* prototypes/office.xlsx\n'
+            '\t* prototypes/residential_ownership.xlsx\n'
+            '\t* prototypes/residential_rental.xlsx\n'
+            '\t* prototypes/retail.xlsx\n'
+            '\t* prototypes/wd.xlsx\n'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         '-d', '--data-dir',
