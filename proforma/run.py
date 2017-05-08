@@ -55,7 +55,7 @@ class ModelRun:
         return sum(run.n_units for run in self.runs)
 
     def _df_rows(self):
-        """Generator yielded rows used by to_df()."""
+        """Yield rows used by to_df()."""
         for run in self.runs:
             for iter_num, iteration in enumerate(run.iterations, start=1):
                 for hbu_num, hbu in enumerate(iteration.hbus, start=1):
@@ -65,6 +65,14 @@ class ModelRun:
                         'hbu': hbu_num,
                         'prototype': hbu.name,
                         'prototype_class': hbu.__class__.__name__,
+                        'code': hbu.parcel.code,
+                        'code_general': hbu.parcel.code_general,
+                        'tract': hbu.parcel.tract,
+                        'ezone': hbu.parcel.ezone,
+                        'design_type': hbu.parcel.design_type,
+                        'vac_dev': hbu.parcel.vac_dev,
+                        'sfr_infill': hbu.parcel.sfr_infill,
+                        'jurisdiction': hbu.parcel.jurisdiction,
                         'n_sf': hbu.n_sf,
                         'n_units': hbu.n_units,
                     }

@@ -8,6 +8,13 @@ class Parcel:
         self,
         reference,
         code,
+        code_general,
+        tract,
+        ezone,
+        design_type,
+        vac_dev,
+        sfr_infill,
+        jurisdiction,
         rmv,
         sf,
         res_rent,
@@ -27,6 +34,13 @@ class Parcel:
         """docstring."""
         self.reference = reference
         self.code = code
+        self.code_general = code_general
+        self.tract = tract
+        self.ezone = ezone
+        self.design_type = design_type
+        self.vac_dev = vac_dev,
+        self.sfr_infill = sfr_infill
+        self.jurisdiction = jurisdiction
         self.rmv = rmv
         self.sf = sf
         self.res_rent = res_rent

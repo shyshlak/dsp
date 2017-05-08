@@ -14,6 +14,11 @@ def unique_reference(df):
     return df.reference.is_unique
 
 
+def clean_design_type(df):
+    """Replace missing design_type with 'None'."""
+    return df.design_type.fillna('None')
+
+
 # READER
 
 class ParcelReader(utils.Reader):
@@ -22,6 +27,13 @@ class ParcelReader(utils.Reader):
     DTYPES = {
         'reference': np.object,
         'code': np.object,
+        'code_general': np.object,
+        'tract': np.object,
+        'ezone': np.object,
+        'design_type': np.object,
+        'vac_dev': np.object,
+        'sfr_infill': bool,
+        'jurisdiction': np.object,
         'rmv': float,
         'sf': float,
         'res_rent': float,
@@ -48,9 +60,9 @@ class ParcelReader(utils.Reader):
     )
 
     def get_dtypes(self):
-        """Add 'Filter' to dtypes."""
-        return {**self.DTYPES, 'Filter': bool}
+        """Add 'filter' to dtypes."""
+        return {**self.DTYPES, 'filter': bool}
 
     def postprocess(self, df):
         """Apply subset."""
-        return df.pipe(utils.subset)
+        return df.pipe(utils.subset).assign(design_type=clean_design_type)

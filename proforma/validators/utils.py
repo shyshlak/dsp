@@ -55,8 +55,8 @@ def get_parser(filename):
 
 
 def subset(df):
-    """Filter out bad rows and drop the 'Filter' column."""
-    return df.loc[~df.Filter].drop('Filter', axis=1)
+    """Filter out bad rows and drop the 'filter' column."""
+    return df.loc[~df['filter']].drop('filter', axis=1)
 
 
 class Reader(object):
