@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CLI to real estate redevelopment forecasting model."""
+"""CLI for DSP."""
 
 import argparse
 from os import path
