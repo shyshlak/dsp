@@ -1,9 +1,0 @@
--r requirements_dev
-
-flake8
-flake8-docstrings
-flake8-polyfill
-flake8-print
-flake8-tidy-imports
-ipython
-jupyter
