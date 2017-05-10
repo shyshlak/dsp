@@ -11,7 +11,7 @@ DSP is a pro forma-based real estate development forecasting model that identifi
 
 To install, clone/download the source code and install the included requirements.
 
-_NOTE: This projects uses Python 3._
+_NOTE: This project uses Python 3._
 
 ## Running the Model
 
