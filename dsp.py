@@ -17,7 +17,7 @@ def parser_factory():
     """Parser factory."""
     parser = argparse.ArgumentParser(
         description=(
-            'Command-line interface to the Real Estate Redevelopment Forecasting Model\n\n'
+            'Command-line interface to the Developer Supply Preprocessor.\n\n'
             'The data directory must contain these eight (8) files:\n'
             '\t* parcels.csv\n'
             '\t* entitlement_screen.xlsx\n'
