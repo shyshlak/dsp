@@ -61,7 +61,9 @@ class _SharedPrototype:
             return 0
         max_units = self.density / 43560 * self.parcel.sf
         # Limit
-        return max_units * self.redevelopment_rate * self.LIMITING_FACTOR
+        units_gained = max_units * self.redevelopment_rate * self.LIMITING_FACTOR
+        units_lost = self.parcel.units * self.redevelopment_rate
+        return units_gained - units_lost
 
 
 class Prototype(_SharedPrototype):

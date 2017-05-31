@@ -114,6 +114,7 @@ class ParcelRun:
             # Set up for next iteration
             parcel = deepcopy(parcel)
             parcel.sf -= iteration.n_sf
+            parcel.units += iteration.n_units
 
     @property
     def n_sf(self):

@@ -36,6 +36,7 @@ class ParcelReader(utils.Reader):
         'jurisdiction': np.object,
         'rmv': float,
         'sf': float,
+        'units': float,
         'res_rent': float,
         'res_price': float,
         'off_mkt': float,

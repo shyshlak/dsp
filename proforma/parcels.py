@@ -17,6 +17,7 @@ class Parcel:
         jurisdiction,
         rmv,
         sf,
+        units,
         res_rent,
         res_price,
         off_mkt,
@@ -43,6 +44,7 @@ class Parcel:
         self.jurisdiction = jurisdiction
         self.rmv = rmv
         self.sf = sf
+        self.units = units
         self.res_rent = res_rent
         self.res_price = res_price
         self.off_mkt = off_mkt
