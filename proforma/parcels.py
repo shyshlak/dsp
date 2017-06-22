@@ -30,7 +30,8 @@ class Parcel:
         flex_rent,
         park_rent,
         park_own,
-        park_off
+        park_off,
+        conversion_rate_region,
     ):
         """docstring."""
         self.reference = reference
@@ -58,6 +59,7 @@ class Parcel:
         self.park_rent = park_rent
         self.park_own = park_own
         self.park_off = park_off
+        self.conversion_rate_region = conversion_rate_region
 
     @property
     def rmv_per_sf(self):
