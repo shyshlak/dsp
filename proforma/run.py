@@ -5,11 +5,6 @@ from multiprocessing import Pool
 import pandas as pd
 
 
-def compound_rate(x, n):
-    """Compound X for n periods."""
-    return ((1 + x) ** n) - 1
-
-
 class ModelRun:
     """Model run."""
 
@@ -17,17 +12,15 @@ class ModelRun:
         self,
         parcels,
         prototypes,
-        base_conversion_rates,
+        conversion_rates,
         screen,
         n_iterations,
         iteration_length,
         parallel=True
     ):
         """init."""
-        self.conversion_rates = tuple(
-            (upper_bound, compound_rate(rate, iteration_length))
-            for upper_bound, rate in base_conversion_rates
-        )
+        # Compound
+        self.conversion_rates = conversion_rates.compound(iteration_length)
 
         if parallel:
             with Pool() as p:
@@ -75,6 +68,12 @@ class ModelRun:
                         'jurisdiction': hbu.parcel.jurisdiction,
                         'n_sf': hbu.n_sf,
                         'n_units': hbu.n_units,
+                        'n_sf_start': hbu.parcel.sf,
+                        'n_units_start': hbu.parcel.units,
+                        'max_sf': hbu.max_sf,
+                        'max_units': hbu.max_units,
+                        'redevelopment_rate': hbu.redevelopment_rate,
+                        'net_redev_rate': hbu.net_redev_rate,
                     }
 
     def to_df(self):
@@ -118,12 +117,12 @@ class ParcelRun:
 
     @property
     def n_sf(self):
-        """Number of square feet yielded by parcel run."""
+        """Return the number of square feet yielded by parcel run."""
         return sum(iteration.n_sf for iteration in self.iterations)
 
     @property
     def n_units(self):
-        """Number of units yielded by parcel run."""
+        """Return the number of units yielded by parcel run."""
         return sum(iteration.n_units for iteration in self.iterations)
 
 
@@ -166,10 +165,10 @@ class ParcelIteration:
 
     @property
     def n_sf(self):
-        """Number of square feet yielded by all high and best uses."""
+        """Return the number of square feet yielded by all high and best uses."""
         return sum(hbu.n_sf for hbu in self.hbus)
 
     @property
     def n_units(self):
-        """Number of units yielded by all high and best uses."""
+        """Return the number of units yielded by all high and best uses."""
         return sum(hbu.n_units for hbu in self.hbus)

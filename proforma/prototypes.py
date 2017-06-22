@@ -44,14 +44,32 @@ class _SharedPrototype:
         if ratio is None:
             return 0
 
-        for upper_bound, rate in self.conversion_rates:
-            if ratio < upper_bound:
-                return rate
+        return self.conversion_rates.get(self.parcel.conversion_rate_region, ratio)
+
+    @property
+    def net_redev_rate(self):
+        """Redevelopment rate, adjusted for limiting factor."""
+        return self.redevelopment_rate * self.LIMITING_FACTOR
+
+    @property
+    def max_sf(self):
+        """Maximum square feet allowable on prototype."""
+        return self.far * self.parcel.sf
 
     @property
     def n_sf(self):
         """Determine the number of yielded square feet."""
-        return self.far * self.parcel.sf * self.redevelopment_rate * self.LIMITING_FACTOR
+        sf_gained = self.max_sf * self.net_redev_rate
+        sf_lost = self.parcel.sf * self.redevelopment_rate
+        return sf_gained - sf_lost
+
+    @property
+    def max_units(self):
+        """Maximum number of units allowable on prototype."""
+        if not isinstance(self, (ResidentialOwnershipPrototype, ResidentialRentalPrototype)):
+            # Units only apply to residential prototypes
+            return 0
+        return self.density / 43560 * self.parcel.sf
 
     @property
     def n_units(self):
@@ -59,9 +77,8 @@ class _SharedPrototype:
         if not isinstance(self, (ResidentialOwnershipPrototype, ResidentialRentalPrototype)):
             # Units only apply to residential prototypes
             return 0
-        max_units = self.density / 43560 * self.parcel.sf
-        # Limit
-        units_gained = max_units * self.redevelopment_rate * self.LIMITING_FACTOR
+
+        units_gained = self.max_units * self.net_redev_rate
         units_lost = self.parcel.units * self.redevelopment_rate
         return units_gained - units_lost
 
@@ -124,7 +141,9 @@ class Prototype(_SharedPrototype):
         )
         if name in fit_attributes and not self._is_fit:
             raise ValueError('{0} cannot be accessed until the Prototype is fit.'.format(name))
-        return super().__getattr__(name)
+        raise AttributeError(
+            '{0} object has no attribute {1}'.format(self.__class__.__name__, name)
+        )
 
     def fit(self, parcel, conversion_rates):
         """Fit a prototype."""
@@ -682,84 +701,3 @@ class ResidentialOwnershipPrototype(_SharedPrototype):
     def rpv_per_sf(self):
         """Residual property value per square foot."""
         return self.residual_property_value / self.site_size
-
-
-if __name__ == '__main__':
-    logger.setLevel(logging.DEBUG)
-    # Console handler
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    logger.addHandler(ch)
-
-    office_high_rise_assumptions = dict(
-        site_size=40000,
-        stories=10,
-        building_sf=300000,
-        efficiency_ratio=0.9,
-        parking_ratio_per_1000_sf=1.5,
-        pct_structured_parking=1,
-        base_construction_cost_per_sf=210,
-        tenant_improvement_allowance=45,
-        construction_adjustment_factor=0,
-        base_parking_cost_per_space=55000,
-        parking_adjustment_factor=0,
-        base_income_per_sf_per_year=24,
-        income_adjustment_factor=0,
-        parking_charges_per_space_per_month=120,
-        vacancy_collection_loss=0.1,
-        base_operating_expenses=0.05,
-        operating_adjustment_factor=0,
-        base_capitalization_rate=0.08,
-        capitalization_adjustment_factor=0,
-        threshold_return_on_cost=0.092
-    )
-
-    rental_high_rise_assumptions = dict(
-        site_size=40000,
-        density=400,
-        avg_unit_size=725,
-        efficiency_ratio=0.85,
-        parking_ratio_per_unit=1,
-        pct_structured_parking=1,
-        base_construction_cost_per_sf=275,
-        construction_adjustment_factor=0,
-        base_parking_cost_per_space=55000,
-        parking_adjustment_factor=0,
-        base_income_per_sf_per_month=2.1,
-        income_adjustment_factor=0,
-        parking_charges_per_space_per_month=100 / 1.85 * 2.1,
-        vacancy_collection_loss=0.05,
-        base_operating_expenses=0.33,
-        operating_adjustment_factor=0,
-        base_capitalization_rate=0.07,
-        capitalization_adjustment_factor=0,
-        threshold_return_on_cost=0.077
-    )
-
-    condo_residential_high_rise_assumptions = dict(
-        site_size=40000,
-        density=400,
-        avg_unit_size=775,
-        efficiency_ratio=0.83,
-        parking_ratio_per_unit=1.25,
-        pct_structured_parking=1,
-        base_construction_cost_per_sf=288.75,
-        construction_adjustment_factor=0,
-        base_parking_cost_per_space=55000,
-        parking_adjustment_factor=0,
-        base_sale_price_per_sf=260,
-        income_adjustment_factor=0,
-        parking_charges_per_space=16250,
-        sales_commission=0.04,
-        threshold_return=0.2
-    )
-
-    office_high_rise = OfficePrototype(**office_high_rise_assumptions)
-    rental_high_rise = ResidentialRentalPrototype(**rental_high_rise_assumptions)
-    condo_residential_high_rise = ResidentialOwnershipPrototype(
-        **condo_residential_high_rise_assumptions
-    )
-    msg = '{obj.__class__.__name__}: {obj.rpv_per_sf}'
-    logger.debug(msg.format(obj=office_high_rise))
-    logger.debug(msg.format(obj=rental_high_rise))
-    logger.debug(msg.format(obj=condo_residential_high_rise))

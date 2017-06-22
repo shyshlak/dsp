@@ -8,9 +8,10 @@ from sys import exit
 import numpy as np
 
 import proforma.prototypes as ptypes
+from proforma.conversions import ConversionRates
 from proforma.parcels import Parcel
 from proforma.run import ModelRun
-from proforma.validators import parcels as pav, prototypes as pov, screen as sv
+from proforma.validators import conversions as cv, parcels as pav, prototypes as pov, screen as sv
 
 
 def parser_factory():
@@ -21,6 +22,7 @@ def parser_factory():
             'The data directory must contain these eight (8) files:\n'
             '\t* parcels.csv\n'
             '\t* entitlement_screen.xlsx\n'
+            '\t* conversion_rates.xlsx\n'
             '\t* prototypes/flex.xlsx\n'
             '\t* prototypes/office.xlsx\n'
             '\t* prototypes/residential_ownership.xlsx\n'
@@ -88,6 +90,13 @@ def build_screen(data_dir, parcels, prototypes):
     return sv.ScreenReader(parcels, prototypes).read(filename)
 
 
+def build_conversion_rates(data_dir):
+    """Prepare the conversion rates."""
+    filename = path.join(data_dir, 'conversion_rates.xlsx')
+    df = cv.ConversionRatesReader().read(filename)
+    return ConversionRates(df)
+
+
 def main():
     """Run CLI."""
     parser = parser_factory()
@@ -100,24 +109,16 @@ def main():
     prototypes = build_prototypes(data_dir)
     print('Gathering screen...')
     screen = build_screen(data_dir, parcels, prototypes)
-
-    # TODO: Add better way to adjust conversion rates
-    base_conversion_rates = (
-        # Cut-off, rate
-        (0.75, 0.00952185618800331),
-        (1.25, 0.00515849696448995),
-        (2, 0.00186337303278268),
-        (4, 0.00050113046153647),
-        (np.inf, 0.000617815532037205),
-    )
+    print('Gathering conversion rates...')
+    conversion_rates = build_conversion_rates(data_dir)
 
     # Model run
     print('Starting run...')
-    run = ModelRun(
-        parcels, prototypes, base_conversion_rates, screen, args.n_iterations, args.iteration_length
+    model_run = ModelRun(
+        parcels, prototypes, conversion_rates, screen, args.n_iterations, args.iteration_length
     )
     print('Compiling data...')
-    df = run.to_df()
+    df = model_run.to_df()
 
     # To CSV
     print('Saving data...')

@@ -50,6 +50,7 @@ class ParcelReader(utils.Reader):
         'park_rent': float,
         'park_own': float,
         'park_off': float,
+        'conversion_rate_region': np.object,
     }
 
     CHECKS = (
