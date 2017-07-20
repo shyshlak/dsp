@@ -17,6 +17,7 @@ class Parcel:
         jurisdiction,
         rmv,
         sf,
+        net_no_row,
         units,
         res_rent,
         res_price,
@@ -45,6 +46,7 @@ class Parcel:
         self.jurisdiction = jurisdiction
         self.rmv = rmv
         self.sf = sf
+        self.net_no_row = net_no_row
         self.units = units
         self.res_rent = res_rent
         self.res_price = res_price
