@@ -127,8 +127,8 @@ def main():
     # Summary stats
     print('\nCalculating summary statistics...', end='\n\n')
     print('Number of parcels\t{0}'.format(len(parcels)))
-    print('Total acres yielded\t{0}'.format(df.n_sf.sum()))
-    print('Total units yielded\t{0}'.format(df.n_units.sum()), end='\n\n')
+    print('Total commercial square footage yielded\t{0}'.format(df.n_sf.sum()))
+    print('Total residential units yielded\t{0}'.format(df.n_units.sum()), end='\n\n')
     print(
         (
             df
@@ -136,7 +136,7 @@ def main():
             .n_sf
             .sum()
             .sort_values(ascending=False)
-            .rename_axis('Acres by prototype:')
+            .rename_axis('Commercial square footage by prototype:')
             .to_string()
         ),
         end='\n\n'
@@ -148,7 +148,7 @@ def main():
             .n_units
             .sum()
             .sort_values(ascending=False)
-            .rename_axis('Units by prototype:')
+            .rename_axis('Residential units by prototype:')
             .to_string()
         ),
         end='\n\n'
