@@ -112,7 +112,7 @@ class ParcelRun:
             yield iteration
             # Set up for next iteration
             parcel = deepcopy(parcel)
-            parcel.sf -= iteration.n_sf
+            parcel.sf += iteration.n_sf
             parcel.units += iteration.n_units
 
     @property

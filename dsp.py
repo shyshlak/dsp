@@ -127,7 +127,7 @@ def main():
     # Summary stats
     print('\nCalculating summary statistics...', end='\n\n')
     print('Number of parcels\t{0}'.format(len(parcels)))
-    print('Total acres yielded\t{0}'.format(df.n_sf.sum() / 43560))
+    print('Total acres yielded\t{0}'.format(df.n_sf.sum()))
     print('Total units yielded\t{0}'.format(df.n_units.sum()), end='\n\n')
     print(
         (
@@ -135,7 +135,6 @@ def main():
             .groupby('prototype')
             .n_sf
             .sum()
-            .div(43560)
             .sort_values(ascending=False)
             .rename_axis('Acres by prototype:')
             .to_string()

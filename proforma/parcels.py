@@ -45,7 +45,10 @@ class Parcel:
         self.sfr_infill = sfr_infill
         self.jurisdiction = jurisdiction
         self.rmv = rmv
+        # Commercial square footage (i.e., what's already built)
         self.sf = sf
+        # Buildable square footage. Should always be less than self.sf
+        # TODO: Add validation check that this value is always less than self.rmv.
         self.net_no_row = net_no_row
         self.units = units
         self.res_rent = res_rent

@@ -54,11 +54,17 @@ class _SharedPrototype:
     @property
     def max_sf(self):
         """Maximum square feet allowable on prototype."""
+        if isinstance(self, (ResidentialOwnershipPrototype, ResidentialRentalPrototype)):
+            # Square footage only applies to non-residential prototypes
+            return 0
         return self.far * self.parcel.net_no_row
 
     @property
     def n_sf(self):
         """Determine the number of yielded square feet."""
+        if isinstance(self, (ResidentialOwnershipPrototype, ResidentialRentalPrototype)):
+            # Square footage only applies to non-residential prototypes
+            return 0
         sf_gained = self.max_sf * self.net_redev_rate
         sf_lost = self.parcel.sf * self.redevelopment_rate
         return sf_gained - sf_lost
