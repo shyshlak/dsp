@@ -284,14 +284,14 @@ class OfficePrototype(Prototype):
 
     _INCOME_ATTRIBUTE = 'off_rent'
     _PARKING_ATTRIBUTE = 'park_off'
-    LIMITING_FACTOR = 0.9
+    LIMITING_FACTOR = 1
 
 
 class RetailPrototype(Prototype):
     """Retail prototype."""
 
     _INCOME_ATTRIBUTE = 'ret_rent'
-    LIMITING_FACTOR = 0.5
+    LIMITING_FACTOR = 1
 
     def fit(self, parcel, conversion_rates):
         """Fit a prototype."""
@@ -337,7 +337,7 @@ class ResidentialRentalPrototype(_SharedPrototype):
 
     _INCOME_ATTRIBUTE = 'res_rent'
     _PARKING_ATTRIBUTE = 'park_rent'
-    LIMITING_FACTOR = 0.6
+    LIMITING_FACTOR = 1
 
     def __init__(
         self,
@@ -535,7 +535,7 @@ class ResidentialOwnershipPrototype(_SharedPrototype):
 
     _INCOME_ATTRIBUTE = 'res_price'
     _PARKING_ATTRIBUTE = 'park_own'
-    LIMITING_FACTOR = 0.8
+    LIMITING_FACTOR = 1
 
     def __init__(
         self,
