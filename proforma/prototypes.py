@@ -65,9 +65,8 @@ class _SharedPrototype:
         if isinstance(self, (ResidentialOwnershipPrototype, ResidentialRentalPrototype)):
             # Square footage only applies to non-residential prototypes
             return 0
-        sf_gained = self.max_sf * self.net_redev_rate
-        sf_lost = self.parcel.sf * self.redevelopment_rate
-        return sf_gained - sf_lost
+        # n_gained * probability
+        return (self.max_sf - self.parcel.sf) * self.net_redev_rate
 
     @property
     def max_units(self):
@@ -84,9 +83,8 @@ class _SharedPrototype:
             # Units only apply to residential prototypes
             return 0
 
-        units_gained = self.max_units * self.net_redev_rate
-        units_lost = self.parcel.units * self.redevelopment_rate
-        return units_gained - units_lost
+        # n_gained * probability
+        return (self.max_units - self.parcel.units) * self.net_redev_rate
 
 
 class Prototype(_SharedPrototype):
