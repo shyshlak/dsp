@@ -69,4 +69,7 @@ class Parcel:
     @property
     def rmv_per_sf(self):
         """Real market value per square foot."""
-        return self.rmv / self.sf
+        if self.sf !=0:
+            return self.rmv / self.sf
+        else:
+        return 0
