@@ -49,7 +49,7 @@ def parser_factory():
     )
     parser.add_argument(
         '-n', '--n-iterations',
-        default=5, type=int, help='Number of iterations, defaults to 1'
+        default=1, type=int, help='Number of iterations, defaults to 1'
     )
     return parser
 
